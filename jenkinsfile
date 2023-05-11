@@ -1,0 +1,75 @@
+properties([pipelineTriggers([githubPush()])])
+
+pipeline {
+
+  environment {
+    dockerimagename = "qprofilesdemo/python:latest"
+    dockerImage = ""
+  }
+
+  agent any
+
+  stages {
+
+
+stage('Checkout SCM') {
+  steps {
+    checkout([
+      $class: 'GitSCM',
+      branches: [[name: 'main']],
+      userRemoteConfigs: [[
+        url: 'https://github.com/muddukrishnahm/demo-webapp.git',
+        credentialsId: '',
+      ]]
+     ])
+   }
+}
+
+		
+	    stage ('Build image') {
+            agent { label 'build-server' }
+            steps {
+                script {
+					    sh 'rm -rf demo-webapp'
+					     sh "git clone https://github.com/muddukrishnahm/demo-webapp.git"
+						 //sh 'sudo docker build -t qprofilesdemo/python demo-webapp '      
+						 dockerImage = docker.build(dockerimagename, "./demo-webapp")
+
+                }
+            }
+        }
+	
+
+    stage('Pushing Image') {
+	  agent { label 'build-server' }
+      environment {
+               registryCredential = 'dockerhublogin'
+           }
+      steps{
+        script {
+     withDockerRegistry([ credentialsId: "dockercred", url: "" ]) {
+        dockerImage.push()
+        }
+        }
+      }
+    }
+
+    stage('Deploying App to Kubernetes') {
+      steps {
+        script {
+          
+		  sshagent(['k8s-master']) {
+		      
+		       sh 'ssh -o StrictHostKeyChecking=no -l ubuntu 3.95.222.185 rm -rf demo-webapp'
+		       sh 'ssh -o StrictHostKeyChecking=no -l ubuntu 3.95.222.185 git clone https://github.com/Qprofilesdevops/demo-webapp.git'
+		       sh 'ssh -o StrictHostKeyChecking=no -l ubuntu 3.95.222.185 kubectl delete -f demo-webapp/deployment.yaml'
+		       sh 'ssh -o StrictHostKeyChecking=no -l ubuntu 3.95.222.185 kubectl apply -f demo-webapp/deployment.yaml'
+
+          }
+        }
+      }
+    }
+
+  }
+
+}
