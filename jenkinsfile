@@ -47,8 +47,6 @@ stage('Checkout SCM') {
            }
       steps{
         script {
-		sh 'whoami'
-		sh 'sudo usermod -a -G docker ubuntu'
      withDockerRegistry([ credentialsId: "dockercred", url: "" ]) {
         dockerImage.push()
         }
