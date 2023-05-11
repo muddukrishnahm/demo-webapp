@@ -65,8 +65,6 @@ stage('Checkout SCM') {
 		       sh 'ssh -o StrictHostKeyChecking=no -l ubuntu 3.95.222.185 kubectl delete -f demo-webapp/deployment.yaml'
 		       sh 'ssh -o StrictHostKeyChecking=no -l ubuntu 3.95.222.185 kubectl apply -f demo-webapp/deployment.yaml'
 
-		      //sh 'ssh -o StrictHostKeyChecking=no -l ubuntu 3.95.222.185 git clone https://github.com/Qprofilesdevops/demo-webapp.git && kubectl apply -f demo-webapp/deployment.yaml'
-
           }
         }
       }
